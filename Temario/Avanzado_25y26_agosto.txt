@@ -1,0 +1,65 @@
+Para evitar errores instalamos node, comandos a realizar
+
+Instalar node: apt search nvm
+Cambiar de versión de node: source../.bashrc
+
+nota: AUN NO ESTAN COMPLETADOS LOS COMANDOS A SU TOTALIDAD
+
+Empezando con la primera practica en clases, clonamos el repositorio: "FALTA EL LINK DEL PRIMER REPOSITORIO"
+
+Paso 1: Clonar el repositorio
+
+Paso 2: Ir a la archivo donde se encuentra el archivo package.json
+
+Paso 3: crear un archivo con -> nano Dockerfile
+
+Paso 4: En ese momento se abrirá un editor de texto, en este ponemos las siguientes instrucciones
+
+FROM node:16 "node:15 también vale"
+WORKDIR /app
+COPY . .
+RUN npm install
+EXPOSE 3000
+CMD npm start "CMD ["npm", "start"]
+
+Ctrl + O para guardar y Enter, Ctrl + X para salir del editor de texto
+
+Paso 5: Para iniciar usamos el comando -> docker build -t "nombre" .
+
+nota: EN "nombre" SE ADMITEN UNICAMENTE MINUSCULAS
+
+Paso 6: terminando la instalación hacemos verificamos con
+docker image ls
+
+Este mismo aparecerá con una imagen o archivo con el nombre que pusimos en el anterior comando
+
+Paso 7: Para ejecutar con el archivo usamos el comando
+docker run -p "nombre"
+
+nota: SI HAY ALGUN FALLO VERIFICAR CON: docker ps
+
+Si no hay ningún problema se concluye todo el proyecto y se pondría en marcha con la dirección que se uso que es localhost:3000
+
+
+PRACTICA 2
+
+Paso 1: Clonamos el repositorio -> https://github.com/manfredsteyer/angular-crud
+
+Paso 2: Vamos a la raíz del proyecto y hacemos el comando
+nano Dockerfile
+
+Paso 3: En ese momento se abrirá un editor de texto, en este ponemos las siguientes instrucciones
+
+FROM node:20
+WORKDIR /app
+COPY ./demo/* .
+RUN npm install 
+EXPOSE 4200
+RUN npm install -g @angular/cli
+CMD ng serve --host 0.0.0.0
+//otra forma de hacerlo
+CMD ["ng", "serve", "--host", "0.0.0.0"]
+
+nota: NO USAR LA MISMA RUTA QUE LA ANTERIOR PRACTICA, ESTO HARA QUE EL PROYEECTO NO CORRA Y TENGAMOS UN ERROR
+
+Ctrl + O para guardar y Enter, Ctrl + X para salir del editor de texto
