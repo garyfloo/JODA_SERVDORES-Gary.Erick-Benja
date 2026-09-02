@@ -1,0 +1,317 @@
+APUNTES DE SERVIDORES
+
+*Desplegar wordpress con docker y mysql como base de datos sin usar docker compose
+_______________________________________________________________________
+
+____docker --version
+____sudo docker ps        ---muestra los contenidos que estan actualmente ejecutandose
+
+____sudo docker ps -a      --lo mismo pero muestra todo todo
+
+
+
+____sudo docker network create wordpress-net    --crea ua red docker llamada wordpress-net
+
+lo usamos porque 
+-tenemos dos contenedores 
+wordpress
+wordpress-db
+
+La red permite que ambos contenedores se comuniquen entre ellos.
+
+wordpress
+     │
+     │
+wordpress-net
+     │
+     │
+wordpress-db
+
+
+____sudo docker network ls               --.comprobar las redes
+
+
+========================================================================
+Crear un volumen
+sudo docker volume create mysql-data       ---un volumen permite guardar datos fuera del ciclo de vida del contenedor importante para el Mysql
+
+
+ver los volumenes
+____sudo docker volume ls      
+
+
+
+=========================================================================
+
+
+Crear el contenedor Mysql
+sudo docker run -d \
+  --name wordpress-db \
+  --network wordpress-net \
+  -v mysql-data:/var/lib/mysql \
+  -e MYSQL_ROOT_PASSWORD=... \
+  -e MYSQL_DATABASE=wordpress \
+  -e MYSQL_USER=wordpress \
+  -e MYSQL_PASSWORD=... \
+  mysql:8.0
+  
+  
+  
+  ____docker run     ---Crea y ejecuta un contenedor a partir de una imagen
+  
+  
+  ____--name wordpress-db     ---le damos nombre al contenedor
+  en nuestro caso se llama wordpress-db
+  
+  ____--network wordpress-net    ---conecta el contenedor a nuestra red
+  
+  
+  ___-v mysql-data:/var/lib/mysql	---conecta el volumen
+  
+  
+  
+  --------------------------------------------------------
+  ___-e        permite establecer variables de entorno dentro del contenedor.
+  por ejemplo:
+  ___-e MYSQL_DATABASE=wordpress       ---le indica a la imagen de MMysql que cree una base de datos llamada wordpress
+  
+  tambien usamos
+  ___-e MYSQL_USER=wordpress
+  
+  para crear el usuario de Mysql 
+  
+  ___-e MYSQL_PASSWORD=...
+  
+  para estalecer su contraseña
+  
+  -e MYSQL_ROOT_PASSWORD=...
+  
+  
+  
+  RESUMEN
+MYSQL_ROOT_PASSWORD
+        ↓
+Contraseña del administrador root
+
+MYSQL_DATABASE
+        ↓
+Base de datos que utilizará WordPress
+
+MYSQL_USER
+        ↓
+Usuario de WordPress en MySQL
+
+MYSQL_PASSWORD
+        ↓
+Contraseña de ese usuario
+
+
+
+
+-----------------------------------------------------
+Al final el comando
+
+___mysql:8.0               ---estamos indicando la imagen que docker debe utilizar   es decir Mysql
+
+
+
+
+despues creaos el contenedor wordpress
+
+sudo docker run -d \
+  --name wordpress \
+  --network wordpress-net \
+  -p 8080:80 \
+  -e WORDPRESS_DB_HOST=wordpress-db:3306 \
+  -e WORDPRESS_DB_USER=wordpress \
+  -e WORDPRESS_DB_PASSWORD=... \
+  -e WORDPRESS_DB_NAME=wordpress \
+  wordpress:latest
+  
+  
+  
+  
+COMANDOS QUE USAMOS 
+
+                ┌─────────────────────┐
+                │      Navegador      │
+                │   localhost:8080    │
+                └──────────┬──────────┘
+                           │
+                           ▼
+                ┌─────────────────────┐
+                │      WordPress      │
+                │     Container       │
+                │       :80           │
+                └──────────┬──────────┘
+                           │
+                    Docker network
+                           │
+                           ▼
+                ┌─────────────────────┐
+                │        MySQL        │
+                │     Container       │
+                │       :3306         │
+                └─────────────────────┘
+                
+                
+                
+docker --version
+
+
+
+sudo docker ps
+
+
+
+sudo docker network create wordpress-net
+
+
+
+sudo docker volume create mysql-data
+
+
+
+sudo docker run -d \
+  --name wordpress-db \
+  --network wordpress-net \
+  -v mysql-data:/var/lib/mysql \
+  -e MYSQL_ROOT_PASSWORD=Root1234 \
+  -e MYSQL_DATABASE=wordpress \
+  -e MYSQL_USER=wordpress \
+  -e MYSQL_PASSWORD=Wordpress1234 \
+  mysql:8.0
+  
+ 
+ sudo docker ps
+ 
+ 
+ 
+ 
+ sudo docker run -d \
+  --name wordpress \
+  --network wordpress-net \
+  -p 8080:80 \
+  -e WORDPRESS_DB_HOST=wordpress-db:3306 \
+  -e WORDPRESS_DB_USER=wordpress \
+  -e WORDPRESS_DB_PASSWORD=Wordpress1234 \
+  -e WORDPRESS_DB_NAME=wordpress \
+  wordpress:latest
+  
+ 
+ 
+ sudo docker ps
+ 
+ 
+ por ultimo abrimos http://localhost:8080   en el navegadoro
+ 
+ 
+ ---------------------------------------
+ History 
+ 
+ --para ver todos los comandos que hiciste
+ 
+ _________________________________________________
+ 
+ 
+ hub docker ----------para buscar imagenes
+ 
+ despues copeas los codigos y pones 
+ 
+ gary@GARYFLOO:~/Documentos/iPod-Classic$ nano Dockerfile
+
+te abrira un lugar para guardar los comandos
+ 
+FROM node:24
+EXPOSE 3000
+WORKDIR /app
+COPY . .
+RUN npm install
+CMD npm start
+
+
+pones control + O 
+enter
+control + X
+
+y luego  pones -------
+sudo docker build -t gary .        ----gary tiene que ser igual a tu nombre
+
+
+sudo docker image ls
+
+
+sudo docker run -P gary
+
+
+nano Dockerfile     ------cambiamos toda la linea de  3000  y lo ponemos a abajo asi:
+
+FROM node:20
+WORKDIR /app
+COPY . .
+RUN npm install 
+EXPOSE 80
+CMD npm start
+
+guardamos y cerramos y volvemos a poner 
+
+sudo docker build -t gary .
+
+
+quedamos en la app no se esta desplegando 
+investigar el ing dice que no encuentra una ruta como que su visual esta en otro lado 
+
+
+
+
+cat package jason
+
+
+
+---------------------------------------------
+pasos clonarse el repo
+luego sudo Dockerfile 
+y poner todo 
+
+
+FROM node:20
+WORDIR /app
+COPY . .
+RUN npm install
+EXPOSE 3000
+CMD npm run  -------------ver si es npm install en el repo se ve en json
+
+
+
+en los codigos que sale si sale i, esta bien e, medio creo w, error 
+
+ -it 
+sudo docker build -t gary .       -----no repetir el mis nombre en diferente proyecto sino se pierde el nombre
+
+
+
+source ../.bashrc
+
+
+
+
+para instalar angular 
+npm install -g @angular/cli
+
+
+
+para ejecutar el proyecto
+ng serve
+
+
+
+
+Dockerfile hace que se cree una carpeta 
+
+la ultima fila 
+--------------en la imagen de tu cell esta el completo 
+RUN npm install -g @angular/cli
+CMD ng serve   ---- para angular
+
+
+investigar como levantar el proyecto con angular y react cualquier cosa de los pasos esta en la documentacion de github que mando el ing 
