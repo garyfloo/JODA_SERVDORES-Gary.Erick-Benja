@@ -315,3 +315,400 @@ CMD ng serve   ---- para angular
 
 
 investigar como levantar el proyecto con angular y react cualquier cosa de los pasos esta en la documentacion de github que mando el ing 
+
+
+
+
+
+
+
+
+
+
+-------------------------------------------------------------------------------------------------------------
+desplegue de frontend                    ------->  en react-crud-app$
+
+
+
+https://github.com/knowledgefactory4u/dotnet-mysql-reactjs-crud-app
+
+knowledgefactory4u
+dotnet-mysql-reactjs-crud-app
+
+cd..
+gary@GARYFLOO:~/Documentos/dotnet-mysql-reactjs-crud-app$ cd react-crud-app/
+gary@GARYFLOO:~/Documentos/dotnet-mysql-reactjs-crud-app/react-crud-app$ 
+
+
+mostrar el contenido del archivo
+cat package.json
+
+
+
+ls -la sirve para ver todos los archivos y carpetas que hay dentro de la carpeta actual, incluyendo los archivos ocultos.
+
+ls -la
+
+
+--------------------------------------------
+en nano dockerfile poner (estamos usando react) 
+
+FROM node:20 AS build
+
+WORKDIR /app
+
+COPY package.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+FROM nginx:alpine
+
+COPY --from=build /app/build /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+
+
+
+------------------------------------------
+
+despues guardamos
+y ponemos para crear la imagen
+
+
+sudo docker build -t react-frontend .
+
+
+
+--------------------------------------
+haora creamos y ejecutaos el contenedor
+
+sudo docker run -d --name react-frontend -p 3000:80 react-frontend
+
+----------------------------------------
+luego vemos si esta corriendo nuestro contenedor 
+
+sudo docker ps
+
+------------------------
+si ya da todo
+
+sudo docker run -d --name react-frontend -p 3000:80 react-frontend
+
+sudo docker ps
+
+
+-----------------------------------------------------------------------------------------------------------------------------
+para desplegar el backend                   --->cd dotnet-6-mysql-crud-application
+
+
+antes de crear un dockerfile revisar   appsettings.json   porque ahí está la configuración de conexión a MySQL y no quiero que Docker falle por una conexión mal configurada.
+
+
+cat appsettings.json
+
+
+
+-----------------------------------------
+crear dockerfile 
+
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+
+WORKDIR /src
+
+COPY . .
+
+RUN dotnet restore "WebApi.csproj"
+
+RUN dotnet publish "WebApi.csproj" -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:6.0
+
+WORKDIR /app
+
+COPY --from=build /app/publish .
+
+EXPOSE 80
+
+ENTRYPOINT ["dotnet", "WebApi.dll"]
+
+
+-----------------------
+vemos si creo 
+
+ls -la
+
+Dockerfile
+WebApi.csproj
+Program.cs
+appsettings.json
+...
+
+
+----------------------
+
+creamos la imagen 
+
+sudo docker build -t dotnet-backend .
+
+
+-------------------------------------
+
+
+si todo esta bien crea el contenedor
+
+sudo docker run -d --name dotnet-backend -p 5000:80 dotnet-backend
+
+
+-------------------------------------------------------
+			comprueba los dos contenedores si estan 
+			
+sudo docker ps
+
+react-frontend
+dotnet-backend
+
+
+------------------------------------------------------
+
+sudo docker run -d --name dotnet-backend -p 5000:80 dotnet-backend
+
+sudo docker ps
+
+-----------------------------------------------------
+
+ya tienes todo haora 
+
+Ahora viene lo importante: MySQL
+
+El backend puede estar encendido, pero todavía necesitamos comprobar si puede conectarse a MySQL.
+
+
+
+sudo docker logs dotnet-backend
+
+
+
+Perfecto. El backend sí arrancó, pero encontramos un detalle importante:
+
+Now listening on: http://localhost:9080
+
+Eso significa que la aplicación .NET está escuchando en el puerto 9080 dentro del contenedor, mientras que nosotros publicamos:
+
+
+-----------------------------------------
+detener y eliminar el contenedor actual
+
+sudo docker stop dotnet-backend
+
+sudo docker rm dotnet-backend
+
+
+-------------------------------------------
+
+creamos nuevamente en el puerto correcto
+
+
+sudo docker run -d --name dotnet-backend -p 5000:9080 dotnet-backend
+
+
+
+Tu PC                  Docker
+localhost:5000  →      :9080
+                         ↓
+                    .NET WebApi
+                    
+                    
+                    
+                    
+----------------------------------------
+
+comprobamos
+
+sudo docker ps
+
+------------------------------------
+comprobamos los logs 
+
+sudo docker logs dotnet-backend
+
+
+------------------------------------------
+si todo ya corre 
+
+Vamos a levantar MySQL en otro contenedor y conectar ambos mediante una red Docker.
+
+
+
+sudo docker network create app-network
+
+
+
+para comprobar
+
+sudo docker network ls
+---------------------------------------
+
+
+si todo esta bien creamos Mysql
+
+sudo docker run -d \
+  --name mysql-crud \
+  --network app-network \
+  -e MYSQL_ROOT_PASSWORD=root \
+  -e MYSQL_DATABASE=testdb \
+  -e MYSQL_USER=knfuser \
+  -e MYSQL_PASSWORD=root \
+  -p 3306:3306 \
+  mysql:8.0
+  
+  
+  ---------------------------------------
+  crear la tabla de user 
+  
+  sudo docker exec -i mysql-crud mysql -uknfuser -proot testdb -e "CREATE TABLE users (id INT PRIMARY KEY AUTO_INCREMENT, first_name VARCHAR(20) NOT NULL, last_name VARCHAR(20) NOT NULL, email VARCHAR(20) NOT NULL);"
+  
+  
+  despues 
+  
+  sudo docker exec -it mysql-crud mysql -uknfuser -proot testdb -e "SHOW TABLES;"
+  
+  
+  gary@GARYFLOO:~/Documentos/dotnet-mysql-reactjs-crud-app/dotnet-6-mysql-crud-application$ sudo docker exec -it mysql-crud mysql -uknfuser -proot testdb -e "SHOW TABLES;"
+mysql: [Warning] Using a password on the command line interface can be insecure.
++------------------+
+| Tables_in_testdb |
++------------------+
+| users            |
++------------------+
+gary@GARYFLOO:~/Documentos/dotnet-mysql-reactjs-crud-app/dotnet-6-mysql-crud-application$ 
+
+
+
+-----------------------------------------------------------------
+
+
+sudo docker start mysql-crud dotnet-backend react-frontend
+
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
